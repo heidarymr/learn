@@ -86,4 +86,59 @@
 
 ---
 
+## تعاملات با localStorage
+
+در این فایل، از localStorage برای ذخیره و بازیابی اطلاعات کاربر استفاده می‌شود. مهم‌ترین تعاملات عبارتند از:
+
+### 1. ذخیره تنظیمات کاربر
+- تنظیمات مربوط به پخش خودکار و تعداد تکرار در کلیدهایی مانند `settings-IELTS-Academic-17` ذخیره می‌شود:
+  ```js
+  localStorage.setItem(lsetting, JSON.stringify({ next: true, loop: 2 }));
+  var settings = JSON.parse(localStorage.getItem(lsetting));
+  ```
+
+### 2. ذخیره اندازه فونت
+- اندازه فونت انتخابی کاربر در کلید `fontSize-IELTS-Academic-17` ذخیره و بازیابی می‌شود:
+  ```js
+  localStorage.setItem(lfontSetting, JSON.stringify({ fontSize: 100 }));
+  var fontSize = JSON.parse(localStorage.getItem(lfontSetting)).fontSize;
+  ```
+
+### 3. وضعیت مطالعه واحدها
+- برای هر واحد، وضعیت مطالعه (خوانده شده یا نه) در کلیدهایی مانند `IELTS-Academic-17:unitName` ذخیره می‌شود:
+  ```js
+  localStorage.setItem(path.split("/")[2] + ":" + unitName, JSON.stringify({ read: true }));
+  var status = JSON.parse(localStorage.getItem(path.split("/")[2] + ":" + unitName));
+  ```
+
+### 4. ذخیره آخرین جلسه مطالعه شده
+- اطلاعات آخرین واحد مطالعه شده کاربر در کلید `lastestSession-IELTS-Academic-17` ذخیره می‌شود:
+  ```js
+  localStorage.setItem(lsession, JSON.stringify({ title: unit, index: idx, ... }));
+  var lastSession = JSON.parse(localStorage.getItem(lsession));
+  ```
+
+### 5. مدیریت تبلیغات
+- برای کنترل نمایش تبلیغات، تاریخ آخرین نمایش تبلیغ در کلید `adsCurrentDay-IELTS-Academic-17` ذخیره می‌شود:
+  ```js
+  localStorage.setItem("adsCurrentDay-" + path.split("/")[2], JSON.stringify({ adsCurrentDay: today }));
+  var adsDay = JSON.parse(localStorage.getItem("adsCurrentDay-" + path.split("/")[2]));
+  ```
+
+### 6. یادداشت‌گذاری روی واژگان
+- یادداشت‌های کاربر برای هر واژه در کلید با نام واژه ذخیره می‌شود:
+  ```js
+  localStorage.setItem(word, JSON.stringify({ note: "یادداشت کاربر" }));
+  var note = JSON.parse(localStorage.getItem(word)).note;
+  ```
+
+### 7. سایر موارد
+- در برخی بخش‌ها برای ذخیره وضعیت‌های موقت یا داده‌های کمکی نیز از localStorage استفاده شده است.
+
+---
+
+در مجموع، localStorage نقش مهمی در حفظ تنظیمات، وضعیت مطالعه، یادداشت‌ها و کنترل تبلیغات برای هر کاربر دارد و باعث می‌شود تجربه کاربری شخصی‌سازی و پایدار باشد.
+
+---
+
 این داکیومنت خلاصه‌ای از عملکرد و ساختار فایل js/6ce4abe4-1689-98e8-b0eb-6eb2911e780a.js را به زبان فارسی ارائه می‌دهد. برای توضیح جزئی‌تر هر تابع یا بخش خاص، می‌توانید درخواست دهید.
