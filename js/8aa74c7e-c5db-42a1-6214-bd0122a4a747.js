@@ -1,0 +1,2701 @@
+﻿var timeout,
+  hImage,
+  elm_length,
+  elm_index,
+  hold,
+  l1,
+  l2,
+  next,
+  direction,
+  mc,
+  nextTimeOut,
+  loopTimeOut,
+  autoNextTimeOut,
+  audioInterval,
+  currentReadingIndex,
+  remainAudioLoop,
+  answerTimerInterval,
+  currentIndex,
+  win_width = $(window).width(),
+  win_height = $(window).height(),
+  lang = 2,
+  tmp = "",
+  audioLoop = 0,
+  currentTime = 0,
+  fontSize = 100,
+  path = "/apps-data/english-grammar-in-use-with-answers/",
+  lsession = "lastestSession-" + path.split("/")[2],
+  lsetting = "settings-" + path.split("/")[2],
+  lfontSetting = "fontSize-" + path.split("/")[2];
+function succeded(e, t, i) {
+  t;
+}
+var intervalInit,
+  audioTimeout,
+  loadedTime = 0,
+  ads = !1,
+  countUnitLearned = 0,
+  adsNextUnit = !0;
+function init() {
+  (loadLastSession(),
+    $("#home-section").attr("top", $("#home-section").attr("top")),
+    $("#home-section").css({ position: "absolute", top: 55 }),
+    $("#category-section").attr("top", $("#home-section").attr("top")),
+    $("#category-section").css({ top: 55 }),
+    $("#modal").css({
+      width: $(window).width(),
+      height: $(window).height() + 500,
+    }),
+    $("#section-section").click(function () {
+      ($(".show-ads-cover").remove(),
+        0 < $("#answer-popup").length &&
+          ($("#answer-popup").remove(),
+          clearInterval(answerTimerInterval),
+          (answerTimerInterval = null)),
+        0 < $("#idiom-tip-popup").length && $("#idiom-tip-popup").remove(),
+        $("#home-section").removeAttr("home"));
+      var e = document.getElementById("sound");
+      (null != e && (e.pause(), (e.currentTime = 0)),
+        loadLastSession(),
+        clearTimeout(nextTimeOut),
+        clearTimeout(loopTimeOut),
+        $("#bottom-section")
+          .children(".container")
+          .html(
+            '<div class="app-name">English Grammar in Use</div><div class="app-slogan">With Answers</div>',
+          ),
+        $("#bottom-section").css({ display: "block" }),
+        $("#home-detail").css({ display: "block" }),
+        $("#home-detail").animate({ opacity: "1" }, 0, function () {}),
+        $("#section-section").css({ display: "none" }),
+        $("#category-section").css({ display: "none" }),
+        $("#home-section").css({ display: "block" }),
+        $("html,body").animate(
+          { scrollTop: $("#home-section").attr("top") },
+          0,
+        ),
+        $("#home-section").animate({ opacity: 1, left: 0 }, 0, function () {}));
+    }),
+    $("#settings").click(function () {
+      settings($("#settings").attr("itemid"));
+    }),
+    loadSettings(),
+    $(".font-size").bind("click", function () {
+      ($(this).css({ "border-radius": "0px" }),
+        $(".font-size-cover").css({ display: "block" }),
+        $(".font-size-cover>button").unbind("click"),
+        $(".font-size-cover>button").bind("click", function () {
+          switch ($(this).index()) {
+            case 0:
+              fontSize -= 10;
+              break;
+            case 1:
+              fontSize = 100;
+              break;
+            case 2:
+              fontSize += 10;
+          }
+          $("body").css({ "font-size": fontSize + "%" });
+          var e = { fontSize: fontSize };
+          localStorage.setItem(lfontSetting, JSON.stringify(e));
+        }));
+    }),
+    $("body").on("click", function (e) {
+      0 === $(e.target).closest(".font-size").length &&
+        ($(".font-size").css({ "border-radius": "" }),
+        $(".font-size-cover,#setting-container").hide());
+    }),
+    $("body").on("touchstart", function (e) {
+      0 === $(e.target).closest(".font-size").length &&
+        ($(".font-size").css({ "border-radius": "" }),
+        $(".font-size-cover,#setting-container").hide());
+    }),
+    homeSectionResize(),
+    homeScroll(""));
+}
+function panLeft() {
+  (0 == hold &&
+    ((direction = "left"),
+    (next = elm_index + 1) == elm_length
+      ? (next = 0)
+      : $("#item" + (elm_index + 1)).css({ left: $(window).width() }),
+    elm_length == elm_index + 1 && $("#item0").css({ left: $(window).width() }),
+    (hold = !0)),
+    (l1 = $("#item" + elm_index).offset().left),
+    (l2 = $("#item" + next).offset().left),
+    $("#item" + elm_index).animate({ left: l1 - 1 }, 0, function () {}),
+    $("#item" + next).animate({ left: parseInt(l2) - 1 }, 0, function () {}));
+}
+function panRight() {
+  (0 == hold &&
+    ((direction = "right"),
+    (next = elm_index - 1) < 0
+      ? (next = elm_length - 1)
+      : $("#item" + (elm_index - 1)).css({ left: -$(window).width() }),
+    0 == next &&
+      $("#item" + (elm_length - 1)).css({ left: -$(window).width() }),
+    (hold = !0)),
+    (l1 = $("#item" + elm_index).offset().left),
+    (l2 = $("#item" + next).offset().left),
+    $("#item" + elm_index).animate(
+      { left: parseInt(l1) + 1 },
+      0,
+      function () {},
+    ),
+    $("#item" + next).animate({ left: parseInt(l2) + 1 }, 0, function () {}));
+}
+function panEnd(e) {
+  var t;
+  ("left" == direction
+    ? 100 < e
+      ? ($("#item" + elm_index).animate(
+          { left: -$(window).width() },
+          400,
+          function () {},
+        ),
+        1 == $("#item" + next).attr("story") ||
+        1 == $("#item" + next).attr("exercise")
+          ? (1 == $("#item" + next).attr("exercise") &&
+              null != (t = document.getElementById("sound")) &&
+              (t.pause(), (t.currentTime = 0)),
+            $("#item" + next).animate({ left: 0 }, 400, function () {
+              playSound(next, $("#item" + next).attr("source"));
+            }))
+          : $("#item" + next).animate({ left: 10 }, 400, function () {
+              playSound(next, $("#item" + next).attr("source"));
+            }),
+        (elm_index = next))
+      : ($("#item" + elm_index).animate({ left: 10 }, 400, function () {}),
+        $("#item" + next).animate(
+          { left: $(window).width() },
+          400,
+          function () {},
+        ),
+        nextWordReading())
+    : 100 < e
+      ? ($("#item" + elm_index).animate(
+          { left: $(window).width() },
+          400,
+          function () {},
+        ),
+        1 == $("#item" + next).attr("story") ||
+        1 == $("#item" + next).attr("exercise")
+          ? (1 == $("#item" + next).attr("exercise") &&
+              null != (t = document.getElementById("sound")) &&
+              (t.pause(), (t.currentTime = 0)),
+            $("#item" + next).animate({ left: 0 }, 400, function () {
+              playSound(next, $("#item" + next).attr("source"));
+            }))
+          : $("#item" + next).animate({ left: 10 }, 400, function () {
+              playSound(next, $("#item" + next).attr("source"));
+            }),
+        (elm_index = next))
+      : ($("#item" + elm_index).animate({ left: 10 }, 300, function () {}),
+        $("#item" + next).animate(
+          { left: -$(window).width() },
+          400,
+          function () {},
+        ),
+        nextWordReading()),
+    (hold = !1));
+}
+function loadSettings() {
+  ($("#setting-container").remove(),
+    0 == $("#setting-container").length &&
+      ((e = "<table>"),
+      (e +=
+        '<tr><td>Auto next</td><td><label class="switch"><input id="chkAuto" type="checkbox"><div class="slider round"></div></label></td></tr>'),
+      (e +=
+        '<tr><td>Number of repeat</td><td><select id="optLoop"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></td></tr>'),
+      (e += "</table>"),
+      $(".font-size").append(
+        '<div id="setting-container"><div><table><tr><td>Auto next</td><td><label class="switch"><input id="chkAuto" type="checkbox"><div class="slider round"></div></label></td></tr><tr><td>Number of repeat</td><td><select id="optLoop"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></td></tr></table></div></div>',
+      ),
+      $("#setting-container").children("div").css({ padding: 10 }),
+      $("#chkAuto, #optLoop").change(function () {
+        var e = {
+          next: $("#chkAuto").prop("checked"),
+          loop: $("#optLoop").val(),
+        };
+        localStorage.setItem(lsetting, JSON.stringify(e));
+      })));
+  var e = JSON.parse(localStorage.getItem(lsetting));
+  ($("#optLoop").val(e.loop),
+    1 == e.next
+      ? $("#chkAuto").attr("checked", "checked")
+      : $("#chkAuto").removeAttr("checked"));
+}
+function settings(e) {
+  var t;
+  ($("#setting-container").remove(),
+    1 == e
+      ? ($("#settings img").attr("src", "icons/close-window-50.png"),
+        0 == $("#setting-container").length &&
+          ((t = "<table>"),
+          (t +=
+            '<tr><td>Auto next words</td><td><label class="switch"><input id="chkAuto" type="checkbox"><div class="slider round"></div></label></td></tr>'),
+          (t +=
+            '<tr><td>Number of repeat</td><td><select id="optLoop"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></td></tr>'),
+          (t += "</table>"),
+          $("body").append(
+            '<div id="setting-container"><div><table><tr><td>Auto next words</td><td><label class="switch"><input id="chkAuto" type="checkbox"><div class="slider round"></div></label></td></tr><tr><td>Number of repeat</td><td><select id="optLoop"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></td></tr></table></div></div>',
+          ),
+          $("#setting-container").css({
+            height: $(window).height(),
+            width: 250,
+            right: -300,
+          }),
+          $("#setting-container").children("div").css({ padding: 20 }),
+          $("#chkAuto, #optLoop").change(function () {
+            var e = {
+              next: $("#chkAuto").prop("checked"),
+              loop: $("#optLoop").val(),
+            };
+            localStorage.setItem(lsetting, JSON.stringify(e));
+          })),
+        (t = JSON.parse(localStorage.getItem(lsetting))),
+        $("#optLoop").val(t.loop),
+        1 == t.next
+          ? $("#chkAuto").attr("checked", "checked")
+          : $("#chkAuto").removeAttr("checked"),
+        $("#settings").attr("itemid", 0),
+        $("#setting-container").animate({ right: 0 }, function () {}))
+      : ($("#settings img").attr("src", "icons/Settings-50.png"),
+        $("#setting-container").animate({ right: -300 }, function () {}),
+        $("#settings").attr("itemid", 1)));
+}
+function resize() {
+  1 == $("#show-menu").attr("itemid")
+    ? $(".header").animate({ left: $(window).width() - 60 }, 0, function () {
+        $(".header").css({ position: "fixed" });
+      })
+    : $(".header").css({ width: "100%", left: 0 });
+  var e = $(window).width();
+  ($("#container").css({ width: e }),
+    $("#category-section").css({ width: "100%" }),
+    $("#modal").css({ width: $(window).width(), height: $(window).height() }));
+}
+function resizeHomeSection() {
+  ($(window).height(),
+    $(".header").height(),
+    $("#bottom-section").height(),
+    $(".header").css("height"),
+    $("#home-section"));
+}
+function showCategorySection(e, t, i) {
+  (0 < $("#answer-popup").length &&
+    ($("#answer-popup").remove(),
+    clearInterval(answerTimerInterval),
+    (answerTimerInterval = null)),
+    0 < $("#idiom-tip-popup").length && $("#idiom-tip-popup").remove(),
+    0 < $(".show-ads-cover").length && $(".show-ads-cover").remove(),
+    setStoreLastSession(e, t),
+    settings(0),
+    $("#bottom-section").css({ display: "none" }),
+    $("#category-section").attr("top", $("#home-section").attr("top")),
+    $("#home-detail").animate({ opacity: "0" }, 0, function () {
+      $("#home-detail").css({ display: "none" });
+    }),
+    $("#section-section").css({
+      display: "block",
+      opacity: "0",
+      left: $(window).width(),
+    }),
+    $("#section-section").animate(
+      { opacity: "1", left: 0 },
+      500,
+      function () {},
+    ),
+    $("#section-section").children(".title").html(e),
+    $("html,body").animate({ scrollTop: 0 }, 0),
+    $("#home-section").css({ display: "none", opacity: "0" }),
+    $("#category-section").css({ left: "", display: "block", opacity: "1" }),
+    $("#home-section").attr("home", "0"));
+  var n = JSON.parse(localStorage.getItem(lsetting));
+  ((audioLoop = n.loop),
+    (currentReadingIndex = i),
+    (currentIndex = t),
+    getSectionItem(e));
+}
+function getSectionItem(e) {
+  if (
+    ($(".show-ads-cover").remove(),
+    null != sessionStorage[path.split("/")[2] + ":" + e])
+  ) {
+    var t = JSON.parse(localStorage.getItem(lsetting));
+    ((remainAudioLoop = null != t && 0 < t.loop ? t.loop : 0),
+      null ==
+        localStorage.getItem(path.split("/")[2] + ":" + e.toLowerCase()) &&
+        ((l = { read: !1 }),
+        localStorage.setItem(
+          path.split("/")[2] + ":" + e.toLowerCase(),
+          JSON.stringify(l),
+        ),
+        $("#tbl-last-session" + currentIndex)
+          .find("div")
+          .eq(0)
+          .attr("class", "reading")),
+      $("#category-section")
+        .children(".section")
+        .children(".container")
+        .html(""));
+    var i = JSON.parse(
+      sessionStorage.getItem(path.split("/")[2] + ":" + e),
+    ).reading;
+    if (null != i) {
+      var n =
+        '<li  story="1" remainAudioLoop="' +
+        remainAudioLoop +
+        '" id="item0"><div></div></li>';
+      $("#category-section")
+        .children(".section")
+        .children(".container")
+        .append(n);
+      for (var o = 0; o < i.length; o++) {
+        var s = i[o].type,
+          r = i[o].en,
+          d = (i[o].vi, i[o].story);
+        (i[o].image, i[o].sound);
+        switch (s.toLowerCase()) {
+          case "story":
+            var a = JSON.parse(localStorage.getItem(lsession)),
+              l = {
+                title: a.title,
+                image: $("#home-section")
+                  .children("ul")
+                  .children("li")
+                  .eq(a.index)
+                  .find("img")
+                  .attr("src"),
+                index: a.index,
+                windex: 0,
+                eindex: a.eindex,
+                sindex: 0,
+              };
+            localStorage.setItem(lsession, JSON.stringify(l));
+            n = "";
+            ("" != r && (n += '<div class="wordlist-rotate">' + r + "</div>"),
+              (n += '<div class="en-story">' + d + "</div>"),
+              (n +=
+                '<div style="text-align:center; padding-top:20px; width:100%; display:none"><div class="counter reading"><div></div></div><div style="clear:both"></div></div>'),
+              0 == $("#story-block").length &&
+                $("#item0")
+                  .children("div")
+                  .append('<div id="story-block"></div>'),
+              $("#story-block").append(
+                '<div class="story-block-cover">' + n + "</div>",
+              ),
+              $(".idiom-tip").click(function () {
+                (0 < $("#idiom-tip-popup").length &&
+                  $("#idiom-tip-popup").remove(),
+                  $("body").append(
+                    '<div id="idiom-tip-popup"><div id="close-idiom-tip-popup"><img src="icons/close-window-50.png" /></div><div id="idiom-tip-popup-cover">' +
+                      $("#item" + $(this).attr("idx")).html() +
+                      "</div></div>",
+                  ),
+                  $("#idiom-tip-popup").find(".word-image").remove(),
+                  $("#close-idiom-tip-popup img").click(function () {
+                    $("#idiom-tip-popup").remove();
+                  }));
+              }));
+            break;
+          case "idiom":
+            $("#story-block").append(
+              '<div class="todays-idiom-section"><fieldset><legend>Today’s Idiom</legend>' +
+                d +
+                "</fieldset></div>",
+            );
+            break;
+          case "faq":
+            (0 == $("#exercise-block").length &&
+              $("#story-block")
+                .parent()
+                .append('<div id="exercise-block"></div>'),
+              $("#exercise-block").append(
+                '<div class="wordlist-rotate">' +
+                  r +
+                  '</div><div class="faq-list-section" title="' +
+                  r +
+                  '">' +
+                  d +
+                  "</div>",
+              ));
+            break;
+          case "answer key":
+            ($("#exercise-block").append(
+              '<div id="reading-answer-key"><div class="reading-comprehension-section">' +
+                r +
+                '</div><div class="faq-list-section" title="' +
+                r +
+                '">' +
+                d +
+                "</div></div>",
+            ),
+              $("#exercise-block").append(
+                '<div style="margin-top:20px" class="reading-section-red-answer-key">Answer Key</div><p style="display:none" class="reading-answer-key-remove-after">&nbsp;</p>',
+              ),
+              $(".reading-section-red-answer-key").click(function () {
+                (0 == $(".show-ads-cover").length &&
+                  $("body").append(
+                    '<div class="show-ads-cover">Watch an AD to open ANSWER KEY</div>',
+                  ),
+                  $(".show-ads-cover").css({
+                    "border-bottom": "1px solid",
+                    "font-weight": "bold",
+                    "z-index": "9999999",
+                    position: "fixed",
+                    left: 0,
+                    width: "calc(100% - 20px)",
+                    bottom: 50,
+                    "border-radius": "0px",
+                    padding: "15px 10px",
+                  }),
+                  $(".show-ads-cover").css({ display: "block" }),
+                  $(".show-ads-cover").bind("click", function () {
+                    (JSBridge.LoadStoryAnswerKeyVideoAds(
+                      "ANSWER KEY loaded. Check it out!",
+                    ),
+                      $(".show-ads-cover").remove(),
+                      $("#reading-answer-key")
+                        .find(".answer-key-only")
+                        .html(""),
+                      $("#reading-answer-key").css({ display: "block" }),
+                      $(".reading-section-red-answer-key").css({
+                        display: "none",
+                      }),
+                      $(".reading-answer-key-remove-after").remove(),
+                      $("#reading-answer-key").html(
+                        '<table><tr><td></td><td style="background: aliceblue; text-align:center; font-weight:bold; text-transform:uppercase; padding:7px">Answer Key</td><td style="background: aliceblue; text-align:center; font-weight:bold; text-transform:uppercase; padding:7px">Your Answer</td></tr></table>',
+                      ),
+                      $(".faq-list-section").each(function () {
+                        ("Sample & Definitions" != $(this).attr("title") &&
+                          "" != $(this).attr("title") &&
+                          $("#reading-answer-key table").append(
+                            '<tr><td colspan="3" style="font-weight:bold; text-align:left; text-transform:uppercase">' +
+                              $(this).attr("title") +
+                              "</td></tr>",
+                          ),
+                          $(this)
+                            .children("ol")
+                            .each(function (e) {
+                              var o = 1;
+                              (null != $(this).attr("start") &&
+                                (o = parseInt($(this).attr("start"))),
+                                $("#reading-answer-key table").append(
+                                  '<tr><td></td><td colspan="2">' +
+                                    $(this)
+                                      .parent()
+                                      .children("h4")
+                                      .eq(e)
+                                      .html() +
+                                    "</td></tr>",
+                                ),
+                                $(this)
+                                  .children(".answer-the-questions-section")
+                                  .each(function () {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ));
+                                    var e = $(this)
+                                      .attr("answer-index")
+                                      .split(",");
+                                    if (1 < e.length)
+                                      for (var t = 0; t < e.length; t++)
+                                        ($("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(0)
+                                          .append(
+                                            $(this)
+                                              .children(
+                                                ".ul-multi-choose-answer",
+                                              )
+                                              .children("li")
+                                              .eq(e[t])
+                                              .html() + "<br/>",
+                                          ),
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .append(
+                                              $(this)
+                                                .children(
+                                                  ".ul-multi-choose-answer",
+                                                )
+                                                .children("li")
+                                                .eq(e[t])
+                                                .html() + "<br/>",
+                                            ));
+                                    var i = $(this)
+                                      .children(".ul-choose-answer")
+                                      .children("li")
+                                      .eq($(this).attr("answer-index"));
+                                    ($("#divAnswerKeyCover")
+                                      .children("div")
+                                      .eq(0)
+                                      .html(i.html()),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(0)
+                                        .children("input")
+                                        .remove());
+                                    var n = $(this)
+                                      .children(".ul-choose-answer")
+                                      .children("li");
+                                    (1 < e.length &&
+                                      (n = $(this)
+                                        .children(".ul-multi-choose-answer")
+                                        .children("li")),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(1)
+                                        .html(""),
+                                      n.each(function () {
+                                        "checked" ==
+                                          $(this)
+                                            .children("input")
+                                            .attr("checked") &&
+                                          (1 < e.length
+                                            ? $("#divAnswerKeyCover")
+                                                .children("div")
+                                                .eq(1)
+                                                .append(
+                                                  $(this).html() + "<br/>",
+                                                )
+                                            : $("#divAnswerKeyCover")
+                                                .children("div")
+                                                .eq(1)
+                                                .append($(this).html()),
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .children("input")
+                                            .remove(),
+                                          $(this)
+                                            .children("input")
+                                            .prop("checked", !0));
+                                      }));
+                                    ((i = $.trim(
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(0)
+                                        .html()
+                                        .replace("____", ""),
+                                    )),
+                                      (n = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(1)
+                                          .html()
+                                          .replace("____", ""),
+                                      )));
+                                    (i.toLocaleLowerCase() ==
+                                    n.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            o +
+                                            "</td><td>" +
+                                            i +
+                                            "</td><td>" +
+                                            n +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            o +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            i +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            n +
+                                            "</td></tr>",
+                                        ),
+                                      (o += 1));
+                                  }),
+                                $(this)
+                                  .children(
+                                    ".answer-the-questions-section-char",
+                                  )
+                                  .each(function () {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ));
+                                    var e = $(this).attr("value");
+                                    $("#divAnswerKeyCover")
+                                      .children("div")
+                                      .eq(0)
+                                      .html(e);
+                                    var t = "";
+                                    ($(this)
+                                      .find(".txt-input-answer-char")
+                                      .each(function () {
+                                        t += $(this).val();
+                                      }),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(1)
+                                        .html($(this).attr("pre") + t));
+                                    var i = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(0)
+                                          .html(),
+                                      ),
+                                      e = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(1)
+                                          .html(),
+                                      );
+                                    i.toLocaleLowerCase() ==
+                                    e.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            (parseInt($(this).index()) + 1) +
+                                            "</td><td>" +
+                                            i +
+                                            "</td><td>" +
+                                            e +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            (parseInt($(this).index()) + 1) +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            i +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            e +
+                                            "</td></tr>",
+                                        );
+                                  }),
+                                $(this)
+                                  .children(
+                                    ".answer-the-questions-section-better-fit",
+                                  )
+                                  .each(function () {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ));
+                                    var e = $(this).attr("answer-index");
+                                    $("#divAnswerKeyCover")
+                                      .children("div")
+                                      .eq(0)
+                                      .html(e);
+                                    var t = "";
+                                    ($(this)
+                                      .find(".opt-better-fit")
+                                      .each(function () {
+                                        t += $(this).val() + " / ";
+                                      }),
+                                      (t = t.substring(0, t.lastIndexOf("/"))),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(1)
+                                        .html(t));
+                                    var i = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(0)
+                                          .html(),
+                                      ),
+                                      e = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(1)
+                                          .html(),
+                                      );
+                                    i.toLocaleLowerCase() ==
+                                    e.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            (parseInt($(this).index()) + 1) +
+                                            "</td><td>" +
+                                            i +
+                                            "</td><td>" +
+                                            e +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            (parseInt($(this).index()) + 1) +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            i +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            e +
+                                            "</td></tr>",
+                                        );
+                                  }),
+                                $(this)
+                                  .children(
+                                    ".answer-the-questions-section-word-blank",
+                                  )
+                                  .each(function () {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ));
+                                    var e = $(this).attr("value");
+                                    ($("#divAnswerKeyCover")
+                                      .children("div")
+                                      .eq(0)
+                                      .html(e),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(1)
+                                        .html(
+                                          $(this)
+                                            .children(".opt-fill-blank")
+                                            .val(),
+                                        ));
+                                    var t = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(0)
+                                          .html(),
+                                      ),
+                                      e = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(1)
+                                          .html(),
+                                      );
+                                    (t.toLocaleLowerCase() ==
+                                    e.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            o +
+                                            "</td><td>" +
+                                            t +
+                                            "</td><td>" +
+                                            e +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            o +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            t +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            e +
+                                            "</td></tr>",
+                                        ),
+                                      (o += 1));
+                                  }),
+                                $(this)
+                                  .children(
+                                    ".answer-the-questions-word-similar",
+                                  )
+                                  .each(function () {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ));
+                                    var e = $(this).attr("value");
+                                    ($("#divAnswerKeyCover")
+                                      .children("div")
+                                      .eq(0)
+                                      .html(e),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(1)
+                                        .html(
+                                          $(this)
+                                            .children(".txt-input-answer")
+                                            .val(),
+                                        ));
+                                    var t = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(0)
+                                          .html(),
+                                      ),
+                                      e = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(1)
+                                          .html(),
+                                      );
+                                    t.toLocaleLowerCase() ==
+                                    e.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            (parseInt($(this).index()) + 1) +
+                                            "</td><td>" +
+                                            t +
+                                            "</td><td>" +
+                                            e +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            (parseInt($(this).index()) + 1) +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            t +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            e +
+                                            "</td></tr>",
+                                        );
+                                  }),
+                                $(this)
+                                  .children(".the-questions-R-W")
+                                  .each(function (e) {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ),
+                                      "" != $(this).attr("fvalue")
+                                        ? ($("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(0)
+                                            .html($(this).attr("fvalue")),
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .html(
+                                              $(this)
+                                                .children(
+                                                  ".txt-textarea-long-answer",
+                                                )
+                                                .val(),
+                                            ))
+                                        : ($("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(0)
+                                            .html($(this).attr("tof")),
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .html(
+                                              $(this)
+                                                .children(".opt-r-w")
+                                                .val(),
+                                            )));
+                                    for (
+                                      var t = $.trim(
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(0)
+                                            .html(),
+                                        ),
+                                        i = $.trim(
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .html(),
+                                        ),
+                                        n = t.toLocaleLowerCase().split("/"),
+                                        o = !1,
+                                        s = 0;
+                                      s < n.length;
+                                      s++
+                                    )
+                                      if (
+                                        $.trim(n[s]) == i.toLocaleLowerCase()
+                                      ) {
+                                        o = !0;
+                                        break;
+                                      }
+                                    1 == o && "" != i.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            (parseInt(e) + 1) +
+                                            "</td><td>" +
+                                            t +
+                                            "</td><td>" +
+                                            i +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            (parseInt(e) + 1) +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            t +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            i +
+                                            "</td></tr>",
+                                        );
+                                  }));
+                            }),
+                          $(this)
+                            .children(".word-blank-cover")
+                            .each(function (e) {
+                              var t = $(this).attr("h4index");
+                              (null != t && (e = t),
+                                $("#reading-answer-key table").append(
+                                  '<tr><td></td><td colspan="2" style="font-weight:bold;">' +
+                                    $(this)
+                                      .parent()
+                                      .children("h4")
+                                      .eq(e)
+                                      .html() +
+                                    "</td></tr>",
+                                ),
+                                $(this)
+                                  .find(
+                                    ".answer-the-questions-section-word-blank",
+                                  )
+                                  .each(function (e) {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ));
+                                    var t = $(this).attr("value");
+                                    ($("#divAnswerKeyCover")
+                                      .children("div")
+                                      .eq(0)
+                                      .html(t),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(1)
+                                        .html(
+                                          $(this)
+                                            .children(".opt-fill-blank")
+                                            .val(),
+                                        ));
+                                    var i = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(0)
+                                          .html(),
+                                      ),
+                                      t = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(1)
+                                          .html(),
+                                      );
+                                    i.toLocaleLowerCase() ==
+                                    t.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            (e + 1) +
+                                            "</td><td>" +
+                                            i +
+                                            "</td><td>" +
+                                            t +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            (e + 1) +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            i +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            t +
+                                            "</td></tr>",
+                                        );
+                                  }));
+                            }),
+                          $(this)
+                            .children(".word-or-phrase")
+                            .each(function (e) {
+                              var t = $(this).attr("h4index");
+                              (null != t && (e = t),
+                                $("#exercise-answer-key table").append(
+                                  '<tr><td colspan="3" style="font-weight:bold; text-align:left">' +
+                                    $(this)
+                                      .parent()
+                                      .children("h4")
+                                      .eq(e)
+                                      .html() +
+                                    "</td></tr>",
+                                ),
+                                $(this)
+                                  .children("table")
+                                  .children("tbody")
+                                  .children("tr")
+                                  .each(function (e) {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ));
+                                    var t = $(this)
+                                      .children("td")
+                                      .eq(0)
+                                      .attr("value");
+                                    ($("#divAnswerKeyCover")
+                                      .children("div")
+                                      .eq(0)
+                                      .html(t),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(1)
+                                        .html(
+                                          $(this)
+                                            .find(".opt-word-phrase")
+                                            .val(),
+                                        ));
+                                    var i = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(0)
+                                          .html(),
+                                      ),
+                                      t = $.trim(
+                                        $("#divAnswerKeyCover")
+                                          .children("div")
+                                          .eq(1)
+                                          .html(),
+                                      );
+                                    i == t
+                                      ? $("#exercise-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            (e + 1) +
+                                            "</td><td>" +
+                                            i +
+                                            "</td><td>" +
+                                            t +
+                                            "</td></tr>",
+                                        )
+                                      : $("#exercise-answer-key table").append(
+                                          "<tr><td>" +
+                                            (e + 1) +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            i +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            t +
+                                            "</td></tr>",
+                                        );
+                                  }));
+                            }),
+                          $(this)
+                            .children(".word-free-cover")
+                            .each(function (e) {
+                              var t = $(this).attr("h4index");
+                              (null != t && (e = t),
+                                $("#reading-answer-key table").append(
+                                  '<tr><td></td><td colspan="2">' +
+                                    $(this)
+                                      .parent()
+                                      .children("h4")
+                                      .eq(e)
+                                      .html() +
+                                    "</td></tr>",
+                                ),
+                                $(this)
+                                  .find(".answer-the-questions-word-free")
+                                  .each(function (e) {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ));
+                                    var t = $(this).attr("value");
+                                    ($("#divAnswerKeyCover")
+                                      .children("div")
+                                      .eq(0)
+                                      .html(t),
+                                      $("#divAnswerKeyCover")
+                                        .children("div")
+                                        .eq(1)
+                                        .html(
+                                          $(this)
+                                            .children(".txt-input-answer")
+                                            .val(),
+                                        ));
+                                    for (
+                                      var t = $.trim(
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(0)
+                                            .html(),
+                                        ),
+                                        i = $.trim(
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .html(),
+                                        ),
+                                        n = t.toLocaleLowerCase().split("/"),
+                                        o = !1,
+                                        s = 0;
+                                      s < n.length;
+                                      s++
+                                    )
+                                      if (
+                                        $.trim(n[s]) == i.toLocaleLowerCase()
+                                      ) {
+                                        o = !0;
+                                        break;
+                                      }
+                                    1 == o && "" != i.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            (e + 1) +
+                                            "</td><td>" +
+                                            t +
+                                            "</td><td>" +
+                                            i +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            (e + 1) +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            t +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            i +
+                                            "</td></tr>",
+                                        );
+                                  }),
+                                $(this)
+                                  .find(".the-questions-R-W")
+                                  .each(function (e) {
+                                    ($("#divAnswerKeyCover").remove(),
+                                      0 == $("#divAnswerKeyCover").length &&
+                                        $("body").append(
+                                          '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                        ),
+                                      "" != $(this).attr("fvalue")
+                                        ? ($("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(0)
+                                            .html($(this).attr("fvalue")),
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .html(
+                                              $(this)
+                                                .children(
+                                                  ".txt-textarea-long-answer",
+                                                )
+                                                .val(),
+                                            ))
+                                        : ($("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(0)
+                                            .html($(this).attr("tof")),
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .html(
+                                              $(this)
+                                                .children(".opt-r-w")
+                                                .val(),
+                                            )));
+                                    for (
+                                      var t = $.trim(
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(0)
+                                            .html(),
+                                        ),
+                                        i = $.trim(
+                                          $("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(1)
+                                            .html(),
+                                        ),
+                                        n = t.toLocaleLowerCase().split("/"),
+                                        o = !1,
+                                        s = 0;
+                                      s < n.length;
+                                      s++
+                                    )
+                                      if (
+                                        $.trim(n[s]) == i.toLocaleLowerCase()
+                                      ) {
+                                        o = !0;
+                                        break;
+                                      }
+                                    1 == o && "" != i.toLocaleLowerCase()
+                                      ? $("#reading-answer-key table").append(
+                                          '<tr style="background:#1EA362; color:white"><td>' +
+                                            (parseInt(e) + 1) +
+                                            "</td><td>" +
+                                            t +
+                                            "</td><td>" +
+                                            i +
+                                            "</td></tr>",
+                                        )
+                                      : $("#reading-answer-key table").append(
+                                          "<tr><td>" +
+                                            (parseInt(e) + 1) +
+                                            '</td><td style="background:#1EA362; color:white">' +
+                                            t +
+                                            '</td><td style="background:#D9433D; color:white">' +
+                                            i +
+                                            "</td></tr>",
+                                        );
+                                  }),
+                                $(this)
+                                  .children("ol")
+                                  .each(function () {
+                                    var r = 1;
+                                    (null != $(this).attr("start") &&
+                                      (r = parseInt($(this).attr("start"))),
+                                      $(this)
+                                        .children(
+                                          ".answer-the-questions-section",
+                                        )
+                                        .each(function (e) {
+                                          ($("#divAnswerKeyCover").remove(),
+                                            0 ==
+                                              $("#divAnswerKeyCover").length &&
+                                              $("body").append(
+                                                '<div id="divAnswerKeyCover" style="display:none"><div></div><div></div></div>',
+                                              ));
+                                          var t = !1,
+                                            i = $(this)
+                                              .attr("answer-index")
+                                              .split(",");
+                                          if (
+                                            0 <
+                                              $(this).children(
+                                                ".ul-multi-choose-answer",
+                                              ).length &&
+                                            ((t = !0), 0 < i.length)
+                                          )
+                                            for (var n = 0; n < i.length; n++)
+                                              ($("#divAnswerKeyCover")
+                                                .children("div")
+                                                .eq(0)
+                                                .append(
+                                                  $(this)
+                                                    .children(
+                                                      ".ul-multi-choose-answer",
+                                                    )
+                                                    .children("li")
+                                                    .eq(i[n])
+                                                    .html() + "<br/>",
+                                                ),
+                                                $("#divAnswerKeyCover")
+                                                  .children("div")
+                                                  .eq(1)
+                                                  .append(
+                                                    $(this)
+                                                      .children(
+                                                        ".ul-multi-choose-answer",
+                                                      )
+                                                      .children("li")
+                                                      .eq(i[n])
+                                                      .html() + "<br/>",
+                                                  ));
+                                          var o = $(this)
+                                            .children(".ul-choose-answer")
+                                            .children("li")
+                                            .eq($(this).attr("answer-index"));
+                                          ($("#divAnswerKeyCover")
+                                            .children("div")
+                                            .eq(0)
+                                            .html(o.html()),
+                                            $("#divAnswerKeyCover")
+                                              .children("div")
+                                              .eq(0)
+                                              .children("input")
+                                              .remove());
+                                          var s = $(this)
+                                            .children(".ul-choose-answer")
+                                            .children("li");
+                                          (0 <
+                                            $(this).children(
+                                              ".ul-multi-choose-answer",
+                                            ).length &&
+                                            0 <
+                                              $(this).children(
+                                                ".ul-multi-choose-answer",
+                                              ).length &&
+                                            0 < i.length &&
+                                            (s = $(this)
+                                              .children(
+                                                ".ul-multi-choose-answer",
+                                              )
+                                              .children("li")),
+                                            $("#divAnswerKeyCover")
+                                              .children("div")
+                                              .eq(1)
+                                              .html(""),
+                                            s.each(function () {
+                                              "checked" ==
+                                                $(this)
+                                                  .children("input")
+                                                  .attr("checked") &&
+                                                (1 == t
+                                                  ? 0 < i.length &&
+                                                    $("#divAnswerKeyCover")
+                                                      .children("div")
+                                                      .eq(1)
+                                                      .append(
+                                                        $(this).html() +
+                                                          "<br/>",
+                                                      )
+                                                  : $("#divAnswerKeyCover")
+                                                      .children("div")
+                                                      .eq(1)
+                                                      .append($(this).html()),
+                                                $("#divAnswerKeyCover")
+                                                  .children("div")
+                                                  .eq(1)
+                                                  .children("input")
+                                                  .remove(),
+                                                $(this)
+                                                  .children("input")
+                                                  .prop("checked", !0));
+                                            }));
+                                          ((o = $.trim(
+                                            $("#divAnswerKeyCover")
+                                              .children("div")
+                                              .eq(0)
+                                              .html()
+                                              .replace("____", ""),
+                                          )),
+                                            (s = $.trim(
+                                              $("#divAnswerKeyCover")
+                                                .children("div")
+                                                .eq(1)
+                                                .html()
+                                                .replace("____", ""),
+                                            )));
+                                          (o.toLocaleLowerCase() ==
+                                          s.toLocaleLowerCase()
+                                            ? $(
+                                                "#reading-answer-key table",
+                                              ).append(
+                                                '<tr style="background:#1EA362; color:white"><td>' +
+                                                  r +
+                                                  "</td><td>" +
+                                                  o +
+                                                  "</td><td>" +
+                                                  s +
+                                                  "</td></tr>",
+                                              )
+                                            : $(
+                                                "#reading-answer-key table",
+                                              ).append(
+                                                "<tr><td>" +
+                                                  r +
+                                                  '</td><td style="background:#1EA362; color:white">' +
+                                                  o +
+                                                  '</td><td style="background:#D9433D; color:white">' +
+                                                  s +
+                                                  "</td></tr>",
+                                              ),
+                                            (r += 1));
+                                        }));
+                                  }));
+                            }));
+                      }),
+                      $("#reading-answer-key").css({ display: "block" }),
+                      0 < $("#vocabulary-block").length &&
+                        $("#vocabulary-block")
+                          .children(".wordlist")
+                          .children("li")
+                          .each(function () {
+                            var e,
+                              t = JSON.parse(
+                                localStorage.getItem($(this).attr("word")),
+                              );
+                            (null == t
+                              ? (((e = {}).pron = $(this).attr("pron")),
+                                (e.desc = $(this).attr("desc")),
+                                (e.exam = $(this).attr("exam")),
+                                (e.sound = $(this).attr("sound")),
+                                (e.note = ""),
+                                localStorage.setItem(
+                                  $(this).attr("word"),
+                                  JSON.stringify(e),
+                                ),
+                                $(this)
+                                  .find(".en-desc")
+                                  .html(
+                                    '<span class="arrow">→</span> ' +
+                                      e.desc +
+                                      ' <img word="' +
+                                      $(this).attr("word") +
+                                      '" windex="' +
+                                      $(this).index() +
+                                      '" onclick="wordnote($(this))" src="icons/note_app.jpg" class="word-note" />',
+                                  ),
+                                $("#item" + $(this).index())
+                                  .find(".en-desc")
+                                  .html(
+                                    '<span class="arrow">→</span> ' +
+                                      e.desc +
+                                      ' <img word="' +
+                                      $(this).attr("word") +
+                                      '" windex="' +
+                                      $(this).index() +
+                                      '" onclick="wordnote($(this))" src="icons/note_app.jpg" class="word-note" />',
+                                  ))
+                              : "" != t.note
+                                ? ($(this)
+                                    .find(".en-desc")
+                                    .html(
+                                      '<span class="arrow">→</span> ' +
+                                        t.desc +
+                                        ' <img word="' +
+                                        $(this).attr("word") +
+                                        '" src="icons/note_app.jpg" windex="' +
+                                        $(this).index() +
+                                        '" onclick="wordnote($(this))" class="word-note" /><div class="word-note-cover">' +
+                                        t.note.replace(/\n/g, "<br/>") +
+                                        "</div>",
+                                    ),
+                                  $("#item" + $(this).index())
+                                    .find(".en-desc")
+                                    .html(
+                                      '<span class="arrow">→</span> ' +
+                                        t.desc +
+                                        ' <img word="' +
+                                        $(this).attr("word") +
+                                        '" src="icons/note_app.jpg" windex="' +
+                                        $(this).index() +
+                                        '" onclick="wordnote($(this))" class="word-note" /><div class="word-note-cover">' +
+                                        t.note.replace(/\n/g, "<br/>") +
+                                        "</div>",
+                                    ))
+                                : ($(this)
+                                    .find(".en-desc")
+                                    .html(
+                                      '<span class="arrow">→</span> ' +
+                                        t.desc +
+                                        ' <img word="' +
+                                        $(this).attr("word") +
+                                        '" src="icons/note_app.jpg" windex="' +
+                                        $(this).index() +
+                                        '" onclick="wordnote($(this))" class="word-note" />',
+                                    ),
+                                  $("#item" + $(this).index())
+                                    .find(".en-desc")
+                                    .html(
+                                      '<span class="arrow">→</span> ' +
+                                        t.desc +
+                                        ' <img word="' +
+                                        $(this).attr("word") +
+                                        '" src="icons/note_app.jpg" windex="' +
+                                        $(this).index() +
+                                        '" onclick="wordnote($(this))" class="word-note" />',
+                                    )),
+                              $(this).find(".en-desc").css({ display: "" }),
+                              $("#item" + $(this).index())
+                                .find(".en-desc")
+                                .css({ display: "" }));
+                          }),
+                      localStorage.removeItem(
+                        $("#section-section")
+                          .find(".title")
+                          .html()
+                          .toLowerCase(),
+                      ),
+                      null ==
+                        localStorage.getItem(
+                          $("#section-section")
+                            .find(".title")
+                            .html()
+                            .toLowerCase(),
+                        ) &&
+                        localStorage.setItem(
+                          $("#section-section")
+                            .find(".title")
+                            .html()
+                            .toLowerCase(),
+                          JSON.stringify({ read: !0 }),
+                        ),
+                      $("#tbl-last-session" + currentIndex)
+                        .find("div")
+                        .eq(0)
+                        .attr("class", "play"),
+                      $("html, body").animate(
+                        {
+                          scrollTop:
+                            $("#reading-answer-key").offset().top - 100,
+                        },
+                        600,
+                        function () {},
+                      ),
+                      readFlag());
+                  }));
+              }));
+        }
+      }
+    }
+    (replaceChooseAnswer2(),
+      $(".counter").each(function () {
+        $(this).css({
+          "margin-left": ($(window).width() - $(this).width() - 20) / 2,
+        });
+      }),
+      homeSectionResize(),
+      scaleFontSize(),
+      playSeeking(currentReadingIndex));
+  }
+}
+function playSeeking(e) {
+  ($("#category-section")
+    .find(".container")
+    .children("li")
+    .each(function () {}),
+    (elm_length = $("#category-section")
+      .find(".container")
+      .children("li").length));
+  for (var t = 0; t < elm_length; t++)
+    $("#item" + t).css({ position: "fixed", left: -$(window).width() });
+  ((currentReadingIndex = e),
+    1 == $("#item" + currentReadingIndex).attr("story") ||
+    1 == $("#item" + currentReadingIndex).attr("exercise")
+      ? $("#item" + currentReadingIndex).css({ position: "", left: "" })
+      : $("#item" + currentReadingIndex).css({ position: "fixed", left: 10 }),
+    (elm_index = e),
+    (hold = !1),
+    (next = 0),
+    setTimeout(function () {
+      playSound(currentReadingIndex, "");
+    }, 1e3));
+}
+function playSound(e, t) {
+  currentReadingIndex = e;
+  var i = document.getElementById("sound"),
+    n = JSON.parse(localStorage.getItem(lsession)),
+    o = $("#tbl-last-session" + (parseInt(n.index) + 1)),
+    s = o.parent().attr("en");
+  ($("#bottom-section").css({ display: "block" }),
+    0 < o.length
+      ? ((n = JSON.parse(localStorage.getItem(lsession))),
+        (s = o.parent().attr("en")),
+        0 < n.sindex
+          ? $("#bottom-section")
+              .children(".container")
+              .html(
+                '<ul id="nav-story"><li style="width:40%; display:none" source="' +
+                  t +
+                  '"><img class="audio-play" status="1" src="icons/pause.png" /><span style="margin-left:5px; position:relative; top:-23px"></span></li><li>New Words</li><li style="color:yellow; width:calc(65% - 20px); padding-left:10px; padding-right:10px">' +
+                  s +
+                  "</li></ul>",
+              )
+          : $("#bottom-section")
+              .children(".container")
+              .html(
+                '<ul id="nav-story"><li style="width:40%">Exercises</li><li style="width:0%"></li><li  style="width: 56%; text-align:center; padding-left:5px; padding-right:5px; color:yellow">' +
+                  s +
+                  "</li></ul>",
+              ))
+      : $("#bottom-section")
+          .children(".container")
+          .html(
+            '<div class="app-name">English Grammar in Use</div><div class="app-slogan">With Answers</div>',
+          ),
+    $("#nav-story")
+      .children("li")
+      .eq(0)
+      .click(function () {
+        "Exercises" == $("#nav-story").children("li").eq(0).html() &&
+          ($("#exercise-block").css({ display: "block" }),
+          $("html,body").animate(
+            { scrollTop: $("#exercise-block").offset().top - 60 },
+            500,
+          ),
+          resizeExerciseStory());
+      }),
+    $("#nav-story")
+      .children("li")
+      .eq(1)
+      .click(function () {
+        ($("#bottom-section").css({ display: "none" }),
+          i.pause(),
+          (i.currentTime = 0),
+          $("#item" + currentReadingIndex)
+            .children("div")
+            .animate({ scrollTop: 0 }),
+          playSeeking(0));
+      }),
+    $("#nav-story")
+      .children("li")
+      .eq(2)
+      .click(function () {
+        0 < o.length &&
+          (0 == checkUnitOpened(s)
+            ? showAdsForNextLesson(
+                s,
+                s + " loaded. Check it out!",
+                parseInt(n.index) + 1,
+                0,
+              )
+            : (1 == showAds() &&
+                JSBridge.LoadStoryAnswerKeyVideoAds(
+                  s.toUpperCase() + " loaded. Check it out!",
+                ),
+              showCategorySection(s, parseInt(n.index) + 1, 0)));
+      }));
+}
+function showAds() {
+  var e = new Date(),
+    t = e.getDate() + "-" + (e.getMonth() + 1) + "-" + e.getFullYear(),
+    i = { adsCurrentDay: t };
+  try {
+    var n = localStorage.getItem(path.split("/")[2] + ":adsCurrentDay");
+    return (
+      (null == n || t != JSON.parse(n).adsCurrentDay) &&
+      (localStorage.setItem(
+        path.split("/")[2] + ":adsCurrentDay",
+        JSON.stringify(i),
+      ),
+      !0)
+    );
+  } catch (e) {
+    return (
+      localStorage.setItem(
+        path.split("/")[2] + ":adsCurrentDay",
+        JSON.stringify(i),
+      ),
+      !0
+    );
+  }
+}
+function readFlag() {
+  var e = JSON.parse(localStorage.getItem(lsession)),
+    e = $("#tbl-last-session" + e.index)
+      .parent()
+      .attr("en");
+  (localStorage.removeItem(path.split("/")[2] + ":" + e.toLowerCase()),
+    null == localStorage.getItem(path.split("/")[2] + ":" + e.toLowerCase()) &&
+      localStorage.setItem(
+        path.split("/")[2] + ":" + e.toLowerCase(),
+        JSON.stringify({ read: !0 }),
+      ),
+    $("#tbl-last-session" + currentIndex)
+      .find("div")
+      .eq(0)
+      .attr("class", "play"));
+}
+function showAdsForNextLesson(e, t, i, n) {
+  ($(".show-ads-cover").remove(),
+    $(document).off("click"),
+    0 == $(".show-ads-cover").length &&
+      $("body").append(
+        '<div class="show-ads-cover" opened="1">Watch an AD to open ' +
+          e.toUpperCase() +
+          "</div>",
+      ),
+    $(".show-ads-cover").css({
+      "border-bottom": "1px solid",
+      "font-weight": "bold",
+      "z-index": "9999999",
+      position: "fixed",
+      left: 0,
+      width: "calc(100% - 20px)",
+      bottom: 50,
+      "border-radius": "0px",
+      padding: "15px 10px",
+    }),
+    $(".show-ads-cover").css({ display: "block" }),
+    $(".show-ads-cover").bind("click", function () {
+      (JSBridge.LoadStoryAnswerKeyVideoAds(
+        e.toUpperCase() + " loaded. Check it out!",
+      ),
+        showCategorySection(e, i, n),
+        $(".show-ads-cover").remove());
+    }),
+    setTimeout(function () {
+      ($(document).on("click", function (e) {
+        0 === $(e.target).closest(".show-ads-cover").length &&
+          null != $(".show-ads-cover").attr("opened") &&
+          $(".show-ads-cover").remove();
+      }),
+        $(document).on("touchstart", function (e) {
+          0 === $(e.target).closest(".show-ads-cover").length &&
+            null != $(".show-ads-cover").attr("opened") &&
+            $(".show-ads-cover").remove();
+        }));
+    }, 300));
+}
+function showAdsForNextLesson1(e, t, i, n) {
+  (0 == $(".show-ads-cover").length &&
+    $("body").append(
+      '<div class="show-ads-cover">Watch an AD to open ' +
+        e.toUpperCase() +
+        "</div>",
+    ),
+    $(".show-ads-cover").css({
+      "border-bottom": "1px solid",
+      "font-weight": "bold",
+      "z-index": "9999999",
+      position: "fixed",
+      left: 0,
+      width: "calc(100% - 20px)",
+      bottom: 50,
+      "border-radius": "0px",
+      padding: "15px 10px",
+    }),
+    $(".show-ads-cover").css({ display: "block" }),
+    $(".show-ads-cover").bind("click", function () {
+      (JSBridge.LoadStoryAnswerKeyVideoAds(
+        e.toUpperCase() + " loaded. Check it out!",
+      ),
+        showCategorySection(e, i, n),
+        $(".show-ads-cover").remove());
+    }));
+}
+function checkUnitOpened(e) {
+  return (
+    null != localStorage.getItem(path.split("/")[2] + ":" + e.toLowerCase())
+  );
+}
+function nextWordReading() {
+  var e = JSON.parse(localStorage.getItem(lsetting));
+  null != e &&
+    1 == e.next &&
+    (nextTimeOut = setTimeout(function () {
+      (panLeft(), panEnd(110));
+    }, 3e3));
+}
+function homeScroll(e) {
+  ($(window).scroll(function () {
+    (parseInt($("#home-section").height()),
+      $("#home-section").offset(),
+      $(window).height());
+    var e = parseInt($(this).scrollTop());
+    null == $("#home-section").attr("home") &&
+      $("#home-section").attr("top", e);
+  }),
+    $("#home-section").scroll(function () {
+      (parseInt($("#home-section").height()),
+        $("#home-section").offset(),
+        $(window).height());
+      var e = parseInt($(this).scrollTop());
+      $("#home-section").attr("top", e);
+    }));
+}
+function homeSectionResize() {
+  (resizeHomeSection(), resizeUnitItem());
+}
+function scaleFontSize() {
+  var t = 786432;
+  ($(".en-word").each(function () {
+    var e = $(window).width() * $(window).height(),
+      e = 300 * (Math.sqrt(e) / Math.sqrt(t));
+    $(".en-word").css("font-size", e + "%");
+  }),
+    $(".wordlist-cover .en-word").each(function () {
+      var e = $(window).width() * $(window).height(),
+        e = 110 * (Math.sqrt(e) / Math.sqrt(t));
+      (e < 110 && (e = 110), $(this).css("font-size", e + "%"));
+    }),
+    $(".en-story-title").each(function () {
+      var e = $(window).width() * $(window).height(),
+        e = 200 * (Math.sqrt(e) / Math.sqrt(t));
+      (e < 120 && (e = 120), $(".en-story-title").css("font-size", e + "%"));
+    }),
+    $("#category-section")
+      .children(".section")
+      .children(".container")
+      .find(".word-image")
+      .find("img")
+      .each(function () {
+        ((hImage =
+          $(window).height() -
+          $(".en-word").height() -
+          $("#bottom-section").height() -
+          230),
+          $(this).css({ margin: "" }),
+          250 <= hImage && (hImage = 250),
+          hImage <= 120 &&
+            ((hImage = 120), $(this).css({ margin: "10px 0px 10px 0px" })),
+          $(this).css({ height: hImage, width: hImage }),
+          $(this).parent().css({ float: "", padding: "" }),
+          $("#item" + currentReadingIndex)
+            .find(".en-story-title")
+            .css({ "padding-bottom": "" }),
+          1 == parseInt($(this).attr("story"))
+            ? (250 <= hImage && $(this).css({ height: 250, width: 250 }),
+              hImage <= 120 && $(this).css({ height: 120, width: 120 }),
+              450 <= $(window).width() &&
+                ($(this)
+                  .parent()
+                  .css({ float: "left", padding: "0px 15px 0px 0px" }),
+                $("#item" + currentReadingIndex)
+                  .find(".en-story-title")
+                  .css({ "padding-bottom": 10 })))
+            : ((hImage =
+                ($(window).height() -
+                  $(this).parent().parent().find(".en-word").height() -
+                  $(this).parent().parent().find(".en-exam").height() -
+                  $(this).parent().parent().find(".en-desc").height() -
+                  $("#bottom-section").height()) /
+                2),
+              $(this).css({ height: "0px", width: "0px", display: "none" }),
+              $(this)
+                .parent()
+                .css({ float: "", "padding-top": hImage / 2 })));
+      }),
+    $("#section-section")
+      .children(".title")
+      .css({ width: $(window).width() - 80 }),
+    resizeExerciseStory());
+}
+function scaleFontSizeIndexToolTips() {
+  ($(".tool-index-idioms")
+    .find(".en-word")
+    .each(function () {
+      var e = $(window).width() * $(window).height(),
+        e = 300 * (Math.sqrt(e) / Math.sqrt(786432));
+      $(this).css("font-size", e + "%");
+    }),
+    $("#section-section")
+      .children(".title")
+      .css({ width: $(window).width() - 80 }),
+    resizeExerciseStory());
+}
+function swipeWindow() {
+  ($("#category-section")
+    .find(".container")
+    .children("li")
+    .each(function () {
+      $(this).css({ width: "100%" });
+    }),
+    (elm_length = $("#category-section")
+      .find(".container")
+      .children("li").length));
+  for (var e = 0; e < elm_length; e++)
+    $("#item" + e).css({ position: "fixed", left: -$(window).width() });
+  1 == $("#item" + currentReadingIndex).attr("story") ||
+  1 == $("#item" + currentReadingIndex).attr("exercise")
+    ? $("#item" + currentReadingIndex).css({ position: "", left: "" })
+    : $("#item" + currentReadingIndex).css({ position: "fixed", left: 10 });
+}
+function isStory() {
+  return 1 == parseInt($("#item" + currentReadingIndex).attr("story"));
+}
+function isExercise() {
+  return 1 == parseInt($("#item" + currentReadingIndex).attr("exercise"));
+}
+function resizeExerciseStory() {
+  ($("#category-section")
+    .find(".container")
+    .children("li")
+    .each(function () {
+      var e;
+      (1 != $(this).attr("story") && 1 != $(this).attr("exercise")) ||
+        ($("#item" + $(this).index())
+          .find(".faq-list-section")
+          .children("ol")
+          .css({ margin: "", padding: "" }),
+        $("#item" + $(this).index())
+          .find(".faq-list-section")
+          .css({ "padding-bottom": 10 }),
+        $(window).width() < 400 &&
+          $("#item" + $(this).index())
+            .find(".faq-list-section")
+            .children("ol")
+            .css({ margin: "0px", padding: "0px 0px 0px 20px" }),
+        (e = $("#item" + $(this).index()).children("div")).css({ padding: 10 }),
+        $(window).height(),
+        $(".header").height(),
+        $("#bottom-section").height(),
+        e.height());
+    }),
+    $("#nav-story li").each(function () {
+      ($(this).children("img").css({ float: "", "margin-left": "" }),
+        $(this)
+          .children("span")
+          .attr("style", "margin-left:5px; position:relative; top:-23px"),
+        $(this).width() < $(this).children("span").width() + 45 &&
+          ($(this).children("img").css({ float: "left", "margin-left": 5 }),
+          $(this).children("span").attr("style", "margin-left:5px;")));
+    }),
+    $(".answer-the-questions-section-word-blank").each(function () {
+      var e = $(this).width() - $(this).children("span").width() - 5;
+      (e < 50 && (e = 50),
+        $(this).children(".opt-fill-blank").css({ "max-width": e }));
+    }),
+    $(".sample-cover").each(function () {
+      $(this).children("img");
+      ($(this).children("img").css({ "max-width": 150 }),
+        $(this).children("div").css({ "max-width": "calc(100% - 150px)" }),
+        $(window).width() <= 400 &&
+          ($(this).children("img").css({ "max-width": 110 }),
+          $(this).children("div").css({ "max-width": "calc(100% - 110px)" })));
+    }));
+}
+function loadLastSession() {
+  try {
+    var e,
+      t,
+      i = JSON.parse(localStorage.getItem(lsession));
+    null != i &&
+      ((e = "waiting"),
+      null != (t = localStorage.getItem(i.title.toLowerCase())) &&
+        (e = 1 == $.parseJSON(t).read ? "play" : "reading"),
+      "Index" != i.title &&
+        $("#home-section")
+          .children("div")
+          .eq(0)
+          .html(
+            '<ul class="curriculum-item" style="background:#1DA362"><li class="item" id="word-list-session" style="color:white"><table><tr><td><div class="' +
+              e +
+              '"></div></td><td><div class="title">' +
+              i.title +
+              " </div></td></tr></table></li></ul>",
+          ),
+      $("#home-section").children("div").css({ "padding-top": 15 }),
+      $("#word-list-session, #img-last-session-unit").click(function () {
+        showCategorySection(i.title, i.index, 0);
+      }),
+      $("#exercise-lastest-session").click(function () {
+        var e = JSON.parse(localStorage.getItem(lsession));
+        showCategorySection(e.title, e.index, e.eindex);
+      }),
+      $("#story-lastest-session, #story-lastest-session-play-button").click(
+        function () {
+          var e = JSON.parse(localStorage.getItem(lsession));
+          showCategorySection(e.title, e.index, e.sindex);
+        },
+      ),
+      resizeLastSession(),
+      resizeUnitItem());
+  } catch (e) {}
+}
+function resizeLastSession() {
+  var e = $(window).width() - 130 - 40;
+  (120 < e && (e = 120), $("#img-last-session-unit").css({ width: e }));
+}
+function resizeUnitItem() {
+  var e =
+    $("#home-section").children("ul").children("li").eq(0).width() - 130 - 20;
+  (120 < e && (e = 120),
+    $(".img-last-session-unit").css({ width: e }),
+    $(".session-play-button").css({
+      width: 39,
+      "border-radius": "50px",
+      border: "0px",
+      position: "absolute",
+      top: (e - 39) / 2,
+      left: (e - 39) / 2,
+    }));
+}
+function setStoreLastSession(e, t) {
+  t = {
+    title: e,
+    image: $("#home-section")
+      .children("ul")
+      .children("li")
+      .eq(t)
+      .find("img")
+      .attr("src"),
+    index: t,
+    windex: 0,
+    eindex: 0,
+    sindex: 0,
+  };
+  localStorage.setItem(lsession, JSON.stringify(t));
+}
+function resizeModal() {
+  var e = 320,
+    t = 320;
+  (isMobile.any()
+    ? (t = e = 200)
+    : $(window).width() < e && (t = e = $(window).width() - 40),
+    $("#modal")
+      .find("img")
+      .css({
+        width: e,
+        position: "fixed",
+        left: ($(window).width() - e) / 2,
+        top: ($(window).height() - t) / 2,
+      }));
+}
+function replaceChooseAnswer2() {
+  ($(".answer-the-questions-section .ul-choose-answer")
+    .children("li")
+    .each(function () {
+      var e = $(this).html();
+      $(this).html(
+        '<input type="radio" name="rdo' +
+          $(this).parent().parent().parent().parent().index() +
+          $(this).parent().parent().index() +
+          $(this).parent().index() +
+          '" /> ' +
+          e,
+      );
+    }),
+    $(".answer-the-questions-section .ul-choose-answer")
+      .children("li")
+      .click(function () {
+        var e;
+        ($(this)
+          .parent()
+          .children("li")
+          .each(function () {
+            $(this).css({ color: "", "font-weight": "" });
+          }),
+          $(this).find("input").attr("checked", "checked"),
+          $(this).find("input").prop("checked", !0),
+          $(this).css({ color: "gray", "font-style": "italic" }),
+          $(this)
+            .parent()
+            .children("li")
+            .each(function () {
+              ($(this).find("input").attr("disabled", "disabled"),
+                $(this).unbind("click"));
+            }),
+          $(this).parent().parent().attr("answer-index") == $(this).index()
+            ? 0 < $("#answer-popup").length &&
+              ((e = $("#answer-popup div").eq(0).html().split("/")),
+              $("#answer-popup div")
+                .eq(0)
+                .html(parseInt(e[0]) + 1 + "/" + e[1]),
+              $(this).find("input").attr("checked", "checked"),
+              $(this)
+                .parent()
+                .css({
+                  background: "#F5F5DC",
+                  "border-radius": "7px",
+                  padding: "8px",
+                  border: "2px solid #1ea362",
+                }))
+            : 0 < $("#answer-popup").length &&
+              ((e = $("#answer-popup div").eq(2).html().split("/")),
+              $("#answer-popup div")
+                .eq(2)
+                .html(parseInt(e[0]) + 1 + "/" + e[1]),
+              $(this).css({ color: "red", "font-weight": "bold" }),
+              $(this).find("input").attr("checked", "checked"),
+              $(this)
+                .parent()
+                .css({
+                  background: "lightgray",
+                  "border-radius": "7px",
+                  padding: "8px",
+                  border: "2px solid red",
+                })));
+      }),
+    $(".answer-the-questions-section .ul-multi-choose-answer")
+      .children("li")
+      .each(function () {
+        var e = $(this).html();
+        ($(this).html(
+          '<input type="checkbox" name="rdo' +
+            $(this).parent().parent().index() +
+            $(this).parent().index() +
+            '" /> ' +
+            e,
+        ),
+          $(this).css({ "list-style-type": "none" }));
+      }),
+    $(".answer-the-questions-section .ul-multi-choose-answer")
+      .children("li")
+      .click(function () {
+        $(this).unbind("click");
+        var e,
+          t,
+          i = parseInt($(this).parent().attr("q")) - 1;
+        (0 <= i &&
+          ($(this).parent().attr("q", i),
+          $(this).find("input").attr("checked", "checked"),
+          $(this).css({
+            "font-weight": "",
+            background: "lightgray",
+            padding: "8px",
+          }),
+          $(this).find("input").attr("disabled", "disabled"),
+          $(".answer-the-questions-section .ul-multi-choose-answer")
+            .children("li")
+            .eq($(this).index())
+            .unbind("click")),
+          0 == i &&
+            ((e = ""),
+            $(this)
+              .parent()
+              .children("li")
+              .each(function () {
+                ($(this).find("input").attr("disabled", "disabled"),
+                  $(this).unbind("click"),
+                  "checked" == $(this).find("input").attr("checked") &&
+                    (e += $(this).index() + ","));
+              }),
+            0 < e.length && (e = e.substring(0, e.length - 1)),
+            $(this).parent().parent().attr("answer-index") == e
+              ? ((t = $("#answer-popup div").eq(0).html().split("/")),
+                $("#answer-popup div")
+                  .eq(0)
+                  .html(parseInt(t[0]) + 1 + "/" + t[1]),
+                $(this)
+                  .parent()
+                  .css({
+                    background: "#F5F5DC",
+                    "border-radius": "7px",
+                    padding: "8px",
+                    border: "2px solid #1ea362",
+                  }))
+              : ((t = $("#answer-popup div").eq(2).html().split("/")),
+                $("#answer-popup div")
+                  .eq(2)
+                  .html(parseInt(t[0]) + 1 + "/" + t[1]),
+                $(this)
+                  .parent()
+                  .css({
+                    background: "lightgray",
+                    "border-radius": "7px",
+                    padding: "8px",
+                    border: "2px solid red",
+                  }))));
+      }),
+    $(".faq-list-section .ul-choose-answer li").each(function () {
+      var e = $(this)
+        .html()
+        .replace("_____", ' <input class="txt-input-answer" /> ');
+      $(this).html(e);
+    }),
+    $(".faq-list-section p").each(function () {
+      var e = $(this)
+        .html()
+        .replace(/ __________ /g, ' <input class="txt-input-answer" /> ');
+      $(this).html(e);
+    }),
+    $(".txt-input-one-line").each(function () {
+      var e = $(this)
+        .html()
+        .replace(/ _____ /g, ' <input class="txt-input-answer" /> ');
+      $(this).html(e);
+    }),
+    $(".answer-the-questions-section-char").each(function () {
+      var e = $(this)
+        .html()
+        .replace(/______/g, ' <input class="txt-input-answer-char" /> ')
+        .replace(/_/g, ' <input class="txt-input-answer-char" /> ');
+      $(this).html(e);
+    }),
+    $(".txt-input-answer-char").bind("input", function () {
+      "" !== $(this).val() && $(this).next(".txt-input-answer-char").focus();
+    }),
+    $(".answer-the-questions-textarea").each(function () {
+      var e = $(this)
+        .html()
+        .replace(
+          /_____________/g,
+          '<textarea class="txt-textarea-long-answer"></textarea>',
+        )
+        .replace(
+          /__________/g,
+          '<textarea class="txt-textarea-long-answer"></textarea>',
+        );
+      $(this).html(e);
+    }),
+    $(".answer-the-questions-section-better-fit").each(function () {
+      var t = $(this).children("span").eq(0).html().split("/"),
+        e = $(this)
+          .html()
+          .replace(
+            /__________/g,
+            ' <select class="opt-better-fit"><option></option></select> ',
+          );
+      ($(this).html(e),
+        $(this)
+          .find(".opt-better-fit")
+          .each(function () {
+            for (var e = 0; e < t.length; e++)
+              $(this).append(
+                '<option value="' +
+                  $.trim(t[e]) +
+                  '">' +
+                  $.trim(t[e]) +
+                  "</option>",
+              );
+          }));
+    }),
+    $(".answer-the-questions-section-word-blank").each(function () {
+      var e = $(this)
+        .html()
+        .replace(/__________/g, "");
+      $(this).html(
+        "<span>" +
+          e +
+          '</span> <select class="opt-fill-blank"><option></option></select>',
+      );
+    }));
+  var e = "";
+  ($("#ul-free-option")
+    .children("li")
+    .each(function () {
+      e += "<option>" + $.trim($(this).html()) + "</option>";
+    }),
+    $(".opt-fill-blank").each(function () {
+      $(this).append(e);
+    }));
+  var t = "";
+  ($(".ul-free-option")
+    .children("li")
+    .each(function () {
+      t += "<option>" + $.trim($(this).html()) + "</option>";
+    }),
+    0 < $(".word-blank-cover").length &&
+      ("" == t && (t = e),
+      $(".word-blank-cover")
+        .find(".answer-the-questions-section-word-blank")
+        .each(function () {
+          ($(this).children(".opt-fill-blank").html("<option></option>"),
+            $(this).children(".opt-fill-blank").append(t));
+        })),
+    $(".opt-fill-blank").change(function () {
+      ($(this).attr("disabled", "disabled"),
+        $(this).css({ background: "#F3F3F3", border: "" }));
+    }),
+    $(".answer-the-questions-section-true-false").each(function () {
+      var e = $(this)
+        .html()
+        .replace(
+          /_____/,
+          '<select class="opt-true-false"><option></option><option>T</option><option>F</option></select>',
+        )
+        .replace(
+          /__________/,
+          '<textarea class="txt-textarea-long-answer"></textarea>',
+        );
+      $(this).html(e);
+    }),
+    $(".opt-true-false").change(function () {
+      ($(this).attr("disabled", "disabled"),
+        $(this).css({ background: "#F3F3F3", border: "" }),
+        "F" == $(this).val() &&
+          $(this)
+            .parent()
+            .children(".txt-textarea-long-answer")
+            .css({ display: "block" }));
+    }),
+    $(".the-questions-R-W").each(function () {
+      var e = $(this)
+        .html()
+        .replace(
+          /_____/,
+          '<select class="opt-r-w"><option></option><option>Right</option><option>Wrong</option></select>',
+        )
+        .replace(
+          /__________/,
+          '<textarea class="txt-textarea-long-answer"></textarea>',
+        );
+      $(this).html(e);
+    }),
+    $(".opt-r-w").change(function () {
+      ($(this).attr("disabled", "disabled"),
+        $(this).css({ background: "#F3F3F3", border: "" }),
+        "Wrong" == $(this).val() &&
+          $(this)
+            .parent()
+            .children(".txt-textarea-long-answer")
+            .css({ display: "block" }));
+    }),
+    $(".answer-the-questions-word-similar").each(function () {
+      var e = $(this)
+        .html()
+        .replace(/__________/g, '<input class="txt-input-answer" />');
+      $(this).html(e);
+    }),
+    $(".answer-the-questions-CI").each(function () {
+      var e = $(this)
+        .html()
+        .replace(
+          /______/,
+          '<select class="opt-ci"><option></option><option>C</option><option>I</option></select>',
+        );
+      $(this).html(e);
+    }),
+    $(".opt-ci").change(function () {
+      ($(this).attr("disabled", "disabled"),
+        $(this).css({ background: "#F3F3F3", border: "" }));
+    }),
+    $(".word-or-phrase").each(function () {
+      var e = $(this)
+        .html()
+        .replace(
+          /______/g,
+          '<select class="opt-word-phrase"><option></option></select>',
+        );
+      $(this).html(e);
+      var t = "";
+      ($(this)
+        .children("table")
+        .children("tbody")
+        .children("tr")
+        .each(function () {
+          t += "<option>" + $(this).children("td").eq(1).html() + "</option>";
+        }),
+        $(".opt-word-phrase").each(function () {
+          $(this).append(t);
+        }));
+    }),
+    $(".opt-word-phrase").change(function () {
+      ($(this).attr("disabled", "disabled"),
+        $(this).css({ background: "#F3F3F3", border: "" }));
+    }),
+    $(".answer-the-questions-word-free").each(function () {
+      var e = $(this)
+        .html()
+        .replace(/__________/g, ' <input class="txt-input-answer" />');
+      $(this).html(e);
+    }));
+}
+function practiceTimerAlert() {
+  0 == $("#answer-popup").length &&
+    ($("body").append(
+      '<div id="answer-popup"><div>0/' +
+        $(".answer-the-questions-section").length +
+        "</div><div>00:00</div><div>0/" +
+        $(".answer-the-questions-section").length +
+        "</div></div>",
+    ),
+    0 == $("#exercise-answer-block").length &&
+      $("#exercise-block")
+        .parent()
+        .append('<div id="exercise-answer-block"></div>'),
+    $("#exercise-answer-block").css({ display: "block" }),
+    null == answerTimerInterval &&
+      (answerTimerInterval = setInterval(function () {
+        var e = $("#answer-popup div").eq(1).html().split(":"),
+          t = parseInt(e[1]) + 1,
+          i = parseInt(e[0]);
+        59 < t && ((i += 1), (t = 0));
+        var n = $("#answer-popup div").eq(0).html().split("/"),
+          o = $("#answer-popup div").eq(2).html().split("/"),
+          e = parseInt(n[0]) + parseInt(o[0]);
+        ((59 < i || e >= parseInt(n[1])) &&
+          (clearInterval(answerTimerInterval),
+          0 < parseInt(o[0]) &&
+            ($(".exercise-section-red-answer-key").css({
+              "border-bottom": "1px solid",
+              "font-weight": "bold",
+              "z-index": "9999",
+              position: "fixed",
+              left: 0,
+              width: "100%",
+              bottom: 100,
+              "border-radius": "0px",
+              padding: "15px 0px 15px 0px",
+            }),
+            $(".exercise-section-red-answer-key").css({ display: "block" }),
+            $("#exercise-answer-block").html(
+              "<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>",
+            ))),
+          t < 10 && (t = "0" + t),
+          i < 10 && (i = "0" + i),
+          $("#answer-popup div")
+            .eq(1)
+            .html(i + ":" + t));
+      }, 1e3)));
+}
+function auto_grow(e) {
+  ((e.style.height = "5px"), (e.style.height = e.scrollHeight + "px"));
+}
+function wordnote(e) {
+  ($("#word-note-cover").remove(),
+    $(".word-note-cover").each(function () {
+      $(this).show();
+    }),
+    e.parent().children(".word-note-cover").hide());
+  var t = e.attr("word"),
+    i = JSON.parse(localStorage.getItem(t)),
+    n = "";
+  null != i.note && (n = i.note);
+  i = e.attr("windex");
+  (e
+    .parent()
+    .append(
+      '<div id="word-note-cover"><textarea word="' +
+        t +
+        '">' +
+        n +
+        '</textarea><br/><input type="button"  word="' +
+        t +
+        '" windex="' +
+        i +
+        '" class="note-button" value="Save" /> <input type="button" word="' +
+        t +
+        '" windex="' +
+        i +
+        '" class="note-button" value="Close" /></div>',
+    ),
+    setTimeout(function () {
+      var e = $("#word-note-cover").children("textarea").get(0).scrollHeight;
+      $("#word-note-cover")
+        .children("textarea")
+        .css("height", e + "px");
+    }, 1),
+    $("#word-note-cover")
+      .children("textarea")
+      .on("input", function () {
+        var e = $(this).get(0).scrollHeight;
+        $(this).css("height", e + "px");
+      }),
+    $("#word-note-cover")
+      .children("input")
+      .eq(0)
+      .bind("click", function () {
+        var e = JSON.parse(localStorage.getItem($(this).attr("word")));
+        ((e.note = $("#word-note-cover textarea").val()),
+          localStorage.setItem($(this).attr("word"), JSON.stringify(e)),
+          "" != e.note
+            ? (0 ==
+                $(".wordlist li")
+                  .eq($(this).attr("windex"))
+                  .find(".word-note-cover").length &&
+                $(".wordlist li")
+                  .eq($(this).attr("windex"))
+                  .find(".en-desc")
+                  .append('<div class="word-note-cover"></div>'),
+              0 ==
+                $("#item" + $(this).attr("windex")).find(".word-note-cover")
+                  .length &&
+                $("#item" + $(this).attr("windex"))
+                  .find(".en-desc")
+                  .append('<div class="word-note-cover"></div>'),
+              $(".wordlist li")
+                .eq($(this).attr("windex"))
+                .find(".word-note-cover")
+                .html(e.note.replace(/\n/g, "<br/>")),
+              $("#item" + $(this).attr("windex"))
+                .find(".word-note-cover")
+                .html(e.note.replace(/\n/g, "<br/>")),
+              $(".wordlist li")
+                .eq($(this).attr("windex"))
+                .find(".word-note-cover")
+                .show(),
+              $("#item" + $(this).attr("windex"))
+                .find(".word-note-cover")
+                .show())
+            : ($(".wordlist li")
+                .eq($(this).attr("windex"))
+                .find(".word-note-cover")
+                .hide(),
+              $("#item" + $(this).attr("windex"))
+                .find(".word-note-cover")
+                .hide()),
+          $("#word-note-cover").remove());
+      }),
+    $("#word-note-cover")
+      .children("input")
+      .eq(1)
+      .bind("click", function () {
+        var e = JSON.parse(localStorage.getItem($(this).attr("word")));
+        ("" != e.note
+          ? (0 ==
+            $("#word-note-cover").parent().children(".word-note-cover").length
+              ? $("#word-note-cover")
+                  .parent()
+                  .append(
+                    '<div class="word-note-cover">' +
+                      e.note.replace(/\n/g, "<br/>") +
+                      "</div>",
+                  )
+              : $("#word-note-cover")
+                  .parent()
+                  .children(".word-note-cover")
+                  .html(e.note.replace(/\n/g, "<br/>")),
+            $("#word-note-cover").parent().children(".word-note-cover").show())
+          : $("#word-note-cover").parent().children(".word-note-cover").hide(),
+          $("#word-note-cover").parent().children(".word-note-cover").show(),
+          $("#word-note-cover").remove());
+      }));
+}
+function loadRead(e, t) {
+  localStorage.getItem(e.toLowerCase());
+}
+function sendLoginAction(e) {
+  try {
+    webkit.messageHandlers.loginAction.postMessage(e);
+  } catch (e) {}
+}
+function mobileHeader() {
+  document.querySelector("h1").innerHTML = "WKWebView Mobile";
+}
+$(function () {
+  var e;
+  ($("#modal").css({ display: "block", opacity: "1" }),
+    $("#extendedSplashProgress").css({
+      left: ($(window).width() - $("#extendedSplashProgress").width()) / 2,
+    }),
+    resizeModal(),
+    resize(),
+    null == localStorage.getItem(lsetting) &&
+      ((e = { next: !1, loop: 0 }),
+      localStorage.setItem(lsetting, JSON.stringify(e))),
+    null == localStorage.getItem(lfontSetting)
+      ? ((e = { fontSize: fontSize }),
+        localStorage.setItem(lfontSetting, JSON.stringify(e)))
+      : ((e = JSON.parse(localStorage.getItem(lfontSetting))),
+        (fontSize = e.fontSize)),
+    $.ajax({
+      url: "data/data.json",
+      type: "GET",
+      dataType: "text",
+      success: function (e) {
+        var t = $.parseJSON(e).flashcard;
+        ($("#home-section").html(""),
+          $("#home-section").append('<div style="padding-bottom:20px"></div>'),
+          (loadedTime = t.length));
+        "#ffffff".split(",");
+        for (var i = 0; i < t.length; i++) {
+          var n = t[i].en,
+            o = t[i].desc;
+          null == o && (o = "abc");
+          var s = urlFriendly(o.toLowerCase());
+          0 == $("#div-" + s).length &&
+            $("#home-section").append(
+              '<div id="div-' +
+                s +
+                '"><div style="font-weight: bold;  margin: 5px;text-align: left;font-style: italic;">' +
+                o +
+                '</div><ul class="curriculum-item"></ul></div>',
+            );
+          var r,
+            d = "waiting",
+            o = localStorage.getItem(
+              path.split("/")[2] + ":" + n.toLowerCase(),
+            );
+          (null != o && (d = 1 == $.parseJSON(o).read ? "play" : "reading"),
+            null != t[i].wordlist
+              ? ((r = t[i].wordlist.length),
+                t[i].reading[0].en,
+                t[i].reading[0].image,
+                $("#home-section")
+                  .children("ul")
+                  .append(
+                    '<li><div><table id="tbl-last-session' +
+                      i +
+                      '" ><tr><td style="position:relative"><img en="' +
+                      n +
+                      '" idx="' +
+                      i +
+                      '" wl="' +
+                      r +
+                      '" class="img-last-session-unit story-lastest-session" src="data/icon.jpg" /><img style="display:none" en="' +
+                      n +
+                      '" idx="' +
+                      i +
+                      '" wl="' +
+                      r +
+                      '" class="session-play-button" src="icons/play.png" /></td><td><div en="' +
+                      n +
+                      '" idx="' +
+                      i +
+                      '" wl="' +
+                      r +
+                      '" class="word-list-session button-session">New Words</div><div style="padding:3px"></div><div style="display:none" en="' +
+                      n +
+                      '" idx="' +
+                      i +
+                      '" wl="' +
+                      r +
+                      '" class="exercise-lastest-session button-session">Exercise</div><div style="padding:3px"></div><div en="' +
+                      n +
+                      '" idx="' +
+                      i +
+                      '" wl="' +
+                      r +
+                      '" class="story-lastest-session button-session">Reading</div></td></tr></table><div en="' +
+                      n +
+                      '" idx="' +
+                      i +
+                      '" wl="' +
+                      r +
+                      '" class="button-lesson">' +
+                      n +
+                      "</div></div></li>",
+                  ))
+              : "Index" == n
+                ? $("#home-section")
+                    .children("ul")
+                    .append(
+                      '<li style="text-align:unset"><div><table id="tbl-last-session' +
+                        i +
+                        '"><tr><td style="position:relative"><img en="' +
+                        n +
+                        '" idx="' +
+                        i +
+                        '" wl="' +
+                        r +
+                        '" style=" border:0px solid chocolate;" class="word-list-session img-last-session-unit" src="data/icon.jpg" /></td></tr></table><div en="' +
+                        n +
+                        '" idx="' +
+                        i +
+                        '" wl="' +
+                        r +
+                        '" class="word-list-session button-lesson" style="text-align:center; color:white;  background:None">' +
+                        n +
+                        "</div></div></li>",
+                    )
+                : $("#div-" + s)
+                    .children("ul")
+                    .append(
+                      '<li class="item  word-list-session"  en="' +
+                        n +
+                        '" idx="' +
+                        i +
+                        '" wl="' +
+                        r +
+                        '" ><table id="tbl-last-session' +
+                        i +
+                        '"><tr><td><div class="' +
+                        d +
+                        '"></div></td><td><div class="title">' +
+                        n +
+                        " </div></td></tr></table></li>",
+                    ),
+            sessionStorage.setItem(
+              path.split("/")[2] + ":" + n,
+              JSON.stringify(t[i]),
+            ),
+            --loadedTime);
+        }
+        ($(".word-list-session").click(function () {
+          0 == checkUnitOpened($(this).attr("en"))
+            ? (showAds(),
+              showAdsForNextLesson(
+                $(this).attr("en"),
+                $(this).attr("en"),
+                $(this).attr("idx"),
+                0,
+              ))
+            : (1 == showAds() && JSBridge.LoadStoryAnswerKeyVideoAds(""),
+              showCategorySection($(this).attr("en"), $(this).attr("idx"), 0));
+        }),
+          $(".exercise-lastest-session").click(function () {
+            showCategorySection(
+              $(this).attr("en"),
+              $(this).attr("idx"),
+              parseInt($(this).attr("wl")),
+            );
+          }),
+          $(".story-lastest-session, .session-play-button").click(function () {
+            showCategorySection(
+              $(this).attr("en"),
+              $(this).attr("idx"),
+              parseInt($(this).attr("wl")),
+            );
+          }),
+          init());
+      },
+    }),
+    (intervalInit = setInterval(function () {
+      loadedTime <= 0 &&
+        (clearInterval(intervalInit),
+        homeSectionResize(),
+        swipeWindow(),
+        resizeLastSession(),
+        $("#modal").animate({ opacity: "0" }, 2e3, function () {
+          $("#modal").css({ display: "none" });
+        }));
+    }, 1e3)),
+    $(window).resize(function () {
+      var e = $("#section-section").find(".title").html();
+      switch (
+        (resizeModal(), resize(), homeSectionResize(), swipeWindow(), e)
+      ) {
+        case "Index":
+          scaleFontSizeIndexToolTips();
+          break;
+        case "":
+          break;
+        default:
+          scaleFontSize();
+      }
+      resizeLastSession();
+    }),
+    $("body").css({ "font-size": fontSize + "%" }));
+});
